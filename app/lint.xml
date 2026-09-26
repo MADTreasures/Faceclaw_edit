@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- AAPT2 needs the -v26 qualifier for the adaptive icon even with minSdk 29. -->
+    <issue id="ObsoleteSdkInt" severity="ignore" />
+</lint>

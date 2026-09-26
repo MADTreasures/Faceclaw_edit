@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Faceclaw Edit</string>
+    <string name="channel_connection">Glasses connection</string>
+    <string name="channel_connection_description">Keeps the glasses connected while the phone is locked.</string>
+</resources>

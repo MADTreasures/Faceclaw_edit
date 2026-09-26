@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Two lenses joined by a bridge: the glasses, in the display's green. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#3CFF5A"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M24,48 h22 a4,4 0 0 1 4,4 v6 a10,10 0 0 1 -10,10 h-8 a10,10 0 0 1 -10,-10 v-8 a2,2 0 0 1 2,-2 z M58,52 a4,4 0 0 1 4,-4 h22 a2,2 0 0 1 2,2 v8 a10,10 0 0 1 -10,10 h-8 a10,10 0 0 1 -10,-10 z M50,52 q4,-4 8,0" />
+    <path
+        android:fillColor="#3CFF5A"
+        android:pathData="M30,56 h8 v3 h-8 z" />
+</vector>
