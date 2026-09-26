@@ -51,7 +51,13 @@ class GlassesService : LifecycleService() {
             return START_NOT_STICKY
         }
         ensureChannel()
-        ServiceCompat.startForeground(this, NOTIFICATION_ID, notification("Connecting to the glasses…"), ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
+        try {
+            ServiceCompat.startForeground(this, NOTIFICATION_ID, notification("Connecting to the glasses…"), ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
+        } catch (e: Exception) {
+            // e.g. the Bluetooth permission was revoked while the service was scheduled for restart
+            stopSelf()
+            return START_NOT_STICKY
+        }
         val graph = FaceclawApp.graph(this)
         if (intent == null) graph.connection.connect() // restarted by the system
         if (!observing) {
