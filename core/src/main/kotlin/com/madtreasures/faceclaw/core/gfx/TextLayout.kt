@@ -2,6 +2,35 @@ package com.madtreasures.faceclaw.core.gfx
 
 /** Text measurement and line breaking for [BitmapFont]s. All widths are in whole pixels. */
 object TextLayout {
+    private val emoticons = mapOf(
+        0x1F600 to ":D", 0x1F601 to ":D", 0x1F602 to ":'D", 0x1F603 to ":D", 0x1F604 to ":D", 0x1F605 to ":D",
+        0x1F609 to ";)", 0x1F60A to ":)", 0x1F60D to "<3", 0x1F618 to ":*", 0x1F61B to ":P", 0x1F622 to ":'(",
+        0x1F62D to ":'(", 0x1F620 to ">:(", 0x1F621 to ">:(", 0x1F642 to ":)", 0x1F641 to ":(", 0x1F610 to ":|",
+        0x1F914 to "(?)", 0x1F923 to "xD", 0x1F44D to "(+1)", 0x1F44E to "(-1)", 0x1F44C to "(ok)", 0x1F64F to "(thanks)",
+        0x2764 to "<3", 0x1F496 to "<3", 0x1F525 to "(fire)", 0x1F389 to "(party)", 0x1F4F7 to "(photo)", 0x1F44B to "(wave)",
+        0x2705 to "\u2713", 0x274C to "\u2715",
+    )
+
+    /**
+     * Prepares arbitrary text (e.g. from phone notifications) for the baked fonts: common emoji
+     * become emoticons, variation selectors and joiners disappear.
+     */
+    fun sanitize(text: String): String {
+        if (text.none { it.isSurrogate() || it.code in 0x2600..0x27BF || it.code == 0xFE0F || it.code == 0x200D }) return text
+        val sb = StringBuilder(text.length)
+        var i = 0
+        while (i < text.length) {
+            val cp = text.codePointAt(i)
+            i += Character.charCount(cp)
+            when {
+                cp == 0xFE0F || cp == 0x200D || cp in 0x1F3FB..0x1F3FF -> {}
+                emoticons.containsKey(cp) -> sb.append(emoticons.getValue(cp))
+                else -> sb.appendCodePoint(cp)
+            }
+        }
+        return sb.toString()
+    }
+
     const val ELLIPSIS = "…"
 
     /** Width of [text] in 1/16 px, including kerning. */

@@ -200,8 +200,8 @@ class NotificationPopup(val notification: PhoneNotification, private val onOpen:
         }
         g.drawTextIn(notification.appName, IntRect(iconX + 28, inner.top, inner.right, inner.top + 20), cap, lv.textDim)
         val titleFont = theme.type.bodyStrong
-        g.drawTextIn(notification.title, IntRect(inner.left, inner.top + 22, inner.right, inner.top + 22 + titleFont.lineHeight), titleFont, lv.textStrong)
-        val body = notification.text.replace('\n', ' ')
+        g.drawTextIn(TextLayout.sanitize(notification.title), IntRect(inner.left, inner.top + 22, inner.right, inner.top + 22 + titleFont.lineHeight), titleFont, lv.textStrong)
+        val body = TextLayout.sanitize(notification.text.replace('\n', ' '))
         g.drawTextIn(body, IntRect(inner.left, inner.top + 24 + titleFont.lineHeight, inner.right, inner.bottom), theme.type.body, lv.text, vAlign = com.madtreasures.faceclaw.core.gfx.VAlign.Top)
     }
 

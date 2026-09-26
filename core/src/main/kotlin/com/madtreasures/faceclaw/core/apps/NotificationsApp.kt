@@ -4,6 +4,7 @@ import com.madtreasures.faceclaw.core.gfx.Canvas
 import com.madtreasures.faceclaw.core.gfx.HAlign
 import com.madtreasures.faceclaw.core.gfx.Icons
 import com.madtreasures.faceclaw.core.gfx.IntRect
+import com.madtreasures.faceclaw.core.gfx.TextLayout
 import com.madtreasures.faceclaw.core.platform.PhoneNotification
 import com.madtreasures.faceclaw.core.shell.GlanceCard
 import com.madtreasures.faceclaw.core.shell.GlanceProvider
@@ -39,8 +40,8 @@ class NotificationsApp : GlassApp(), NotificationOpener {
         private fun rebuild(items: List<PhoneNotification>) {
             list.setItems(items.map { n ->
                 MenuItem.Action(
-                    label = n.title.ifBlank { n.appName },
-                    subtitle = listOf(n.appName, n.text.replace('\n', ' ')).filter { it.isNotBlank() }.joinToString("  ·  "),
+                    label = TextLayout.sanitize(n.title.ifBlank { n.appName }),
+                    subtitle = listOf(n.appName, TextLayout.sanitize(n.text.replace('\n', ' '))).filter { it.isNotBlank() }.joinToString("  ·  "),
                     detail = relativeTime(ui.nowMs - n.postedAtMs),
                     key = n.key,
                 ) { ui.push(DetailScreen(n)) }
@@ -77,14 +78,14 @@ class NotificationsApp : GlassApp(), NotificationOpener {
     }
 
     private inner class DetailScreen(private val n: PhoneNotification) : Screen() {
-        private val pager = TextPager(n.text)
+        private val pager = TextPager(TextLayout.sanitize(n.text))
         override val title: String get() = n.appName
 
         override fun render(g: Canvas, bounds: IntRect) {
             val th = theme
             val tf = th.type.title
             val header = bounds.takeTop(tf.lineHeight + 26)
-            g.drawTextIn(n.title, header.takeTop(tf.lineHeight), tf, th.levels.textStrong)
+            g.drawTextIn(TextLayout.sanitize(n.title), header.takeTop(tf.lineHeight), tf, th.levels.textStrong)
             g.drawTextIn(relativeTime(ui.nowMs - n.postedAtMs, long = true) + (n.subText?.let { "  ·  $it" } ?: ""),
                 IntRect(header.left, header.top + tf.lineHeight, header.right, header.bottom), th.type.caption, th.levels.textFaint)
             val hint = bounds.takeBottom(28)

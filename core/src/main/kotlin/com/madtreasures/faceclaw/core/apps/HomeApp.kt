@@ -124,15 +124,16 @@ class HomeScreen(private val registry: AppRegistry) : Screen() {
         val right = r.right - 6
         val titleFont = if (focused) th.type.bodyStrong else th.type.body
         val detail = card.detail
+        val progress = card.progress
         var textRight = right
         if (detail != null) {
             val df = th.type.caption
             val s = TextLayout.ellipsize(df, detail, r.width / 3)
             val w = TextLayout.width(df, s)
-            g.drawTextIn(s, IntRect(right - w, r.top, right, r.bottom), df, if (focused) lv.text else lv.textDim, HAlign.End)
+            val bottom = if (progress != null) r.bottom - 14 else r.bottom
+            g.drawTextIn(s, IntRect(right - w, r.top, right, bottom), df, if (focused) lv.text else lv.textDim, HAlign.End)
             textRight = right - w - 14
         }
-        val progress = card.progress
         if (progress != null) {
             g.drawTextIn(card.title, IntRect(textLeft, r.top, textRight, r.bottom - 14), titleFont, if (focused) lv.textStrong else lv.text)
             Drawing.progressBar(g, IntRect(textLeft, r.bottom - 17, textRight, r.bottom - 13), progress, th, if (focused) lv.textStrong else lv.textDim)
