@@ -290,18 +290,27 @@ class Shell(
         if (!on) {
             displayOffAt = now
             overlays.removeAll { it is ToastOverlay || it is NotificationPopup }
+            for (s in sinks) s.onDisplayPower(false)
         } else {
             lastInputAt = now
             val wake = services.settings[Prefs.wakeTarget]
             if (wake == Prefs.WakeTarget.Home && now - displayOffAt > RESUME_WINDOW_MS) goHome()
+            // Emit the fresh frame before announcing "on", so the glasses fade in with current content.
+            renderFrame()
+            for (s in sinks) s.onDisplayPower(true)
         }
-        for (s in sinks) s.onDisplayPower(on)
         invalidate()
     }
 
+    private var lastWearing: Boolean? = null
+
     private fun onStatusChanged() {
         val wearing = services.status.value.wearing
-        if (wearing == false && displayOn) setDisplay(false)
+        if (wearing != lastWearing) {
+            if (wearing == false && displayOn) setDisplay(false)
+            if (wearing == true && lastWearing == false && !displayOn) setDisplay(true)
+            lastWearing = wearing
+        }
     }
 
     // ------------------------------------------------------------------ input
@@ -424,6 +433,8 @@ class Shell(
         frameTimeMs = now
         lastRenderAt = now
         overlays.removeAll { o -> o.expiresAtMs?.let { it <= now } == true }
+        // While the display is off nothing is shown, so nothing is rendered or sent.
+        if (!displayOn && lastFrame != null) return
         val g = Canvas(back)
         g.clear(0)
         var animating = false
