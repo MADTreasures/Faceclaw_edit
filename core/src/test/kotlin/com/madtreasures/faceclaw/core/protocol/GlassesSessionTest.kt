@@ -131,6 +131,20 @@ class GlassesSessionTest {
     }
 
     @Test
+    fun firstConnectionWaitsForPairing() = runTest {
+        val fake = FakeGlasses(clock = { testScheduler.currentTime })
+        fake.bonded = false
+        fake.bondAcceptedAtMs = 10_000 // the user accepts the pairing dialog after 10 s
+        val session = newSession(fake)
+        session.start()
+        advanceTimeBy(5000)
+        assertEquals(SessionPhase.Connecting, session.status.value.phase)
+        assertTrue(session.status.value.detail.contains("Pairing"), session.status.value.detail)
+        advanceTimeBy(15_000)
+        assertEquals(SessionPhase.Connected, session.status.value.phase)
+    }
+
+    @Test
     fun stockFirmwareIsRejectedWithoutCustomTraffic() = runTest {
         val fake = FakeGlasses(firmwareExtension = null, clock = { testScheduler.currentTime })
         val session = newSession(fake)

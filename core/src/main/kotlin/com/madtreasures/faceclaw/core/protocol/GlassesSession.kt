@@ -287,19 +287,8 @@ class GlassesSession(
         }
         delay(config.settleMs)
 
-        // Security authentication on both arms (soft: pairing may still be completing).
-        val authR = stockOut(Kind.Auth, Arm.Right, Sid.DEV_CONFIG, Envelope.FLAG_NONE, config.authTimeoutMs, G2Messages::authRequest)
-        val authL = stockOut(Kind.Auth, Arm.Left, Sid.DEV_CONFIG, Envelope.FLAG_NONE, config.authTimeoutMs, G2Messages::authRequest)
-        val rR = CompletableDeferred<InboundMessage?>().also { authR.result = it }
-        val rL = CompletableDeferred<InboundMessage?>().also { authL.result = it }
-        writeOut(authR)
-        writeOut(authL)
-        withTimeoutOrNull(config.authTimeoutMs) {
-            rR.await()
-            rL.await()
-        }
-        dropInFlight(authR)
-        dropInFlight(authL)
+        // Security authentication, one temple at a time (Android pairs one device at a time).
+        for (arm in listOf(Arm.Right, Arm.Left)) authenticate(arm)
 
         sendPrelude()
 
@@ -330,6 +319,59 @@ class GlassesSession(
         log("session ready, firmware ${fw.extension}")
     }
 
+    /**
+     * Sends the authentication request. On an unbonded link this makes Android show the pairing
+     * dialog; the glasses answer with success only once the link is encrypted, so an unbonded
+     * temple gets a long deadline and a second request after bonding completes.
+     */
+    private suspend fun authenticate(arm: Arm) {
+        val initiallyBonded = link.isBonded(arm)
+        val pairing = initiallyBonded == false
+        if (pairing) {
+            _status.update { it.copy(detail = "Pairing the ${arm.name.lowercase()} temple — accept the Bluetooth request on your phone") }
+        }
+        var deadline = clock() + if (pairing) 90_000L else config.authTimeoutMs
+        var bondedAt = 0L
+        var resent = false
+        var reply: InboundMessage? = null
+        var out: Out? = null
+        fun send(): Out {
+            reply = null
+            val o = stockOut(Kind.Auth, arm, Sid.DEV_CONFIG, Envelope.FLAG_NONE, config.authTimeoutMs, G2Messages::authRequest)
+            o.onAck = { m -> reply = m }
+            return o
+        }
+        out = send()
+        writeOut(out)
+        var success = false
+        while (clock() < deadline) {
+            val r = reply
+            if (r != null && G2Messages.isAuthSuccess(r)) {
+                success = true
+                break
+            }
+            if (pairing && bondedAt == 0L && link.isBonded(arm) == true) {
+                bondedAt = clock()
+                deadline = max(deadline, clock() + 6000)
+            }
+            if ((pairing && bondedAt != 0L && !resent && clock() - bondedAt >= 2000) ||
+                (!pairing && r != null && !resent)
+            ) {
+                out?.let { dropInFlight(it) }
+                resent = true
+                out = send()
+                writeOut(out!!)
+            }
+            delay(250)
+        }
+        out?.let { dropInFlight(it) }
+        if (!success) {
+            if (pairing) throw TransportFailure("pairing with the ${arm.name.lowercase()} temple was not completed")
+            log("authentication of $arm unconfirmed; continuing")
+        }
+        _status.update { it.copy(detail = "Connecting to the glasses…") }
+    }
+
     private suspend fun sendPrelude() {
         val prelude = stockOut(Kind.Prelude, Arm.Right, Sid.DASHBOARD, Envelope.FLAG_REQUEST, config.preludeTimeoutMs, fixedMagic = G2Messages.PRELUDE_MAGIC) { G2Messages.prelude() }
         val r = CompletableDeferred<InboundMessage?>().also { prelude.result = it }
@@ -351,7 +393,7 @@ class GlassesSession(
 
     private suspend fun sendLease(op: Int) {
         for (arm in listOf(Arm.Right, Arm.Left)) {
-            link.write(arm, Envelope.frame(G2Messages.cfwControl(op), Sid.SETTINGS, Envelope.FLAG_REQUEST, nextSeq()))
+            link.write(arm, Envelope.frame(G2Messages.cfwControl(op), Sid.SETTINGS, Envelope.FLAG_REQUEST, nextSeq(), stockWriteSize(arm)))
         }
     }
 
@@ -562,6 +604,9 @@ class GlassesSession(
 
     // ------------------------------------------------------------------ writing
 
+    /** Stock frames are up to 240 bytes; smaller links get more, shorter fragments. */
+    private fun stockWriteSize(arm: Arm): Int = min(Envelope.MAX_WRITE, max(23, link.mtu(arm)) - 3).coerceAtLeast(20)
+
     private fun nextSeq(): Int {
         val s = txSeq
         txSeq = (txSeq + 1) and 0xFF
@@ -593,7 +638,7 @@ class GlassesSession(
         val frames = if (o.cfw != null) {
             encoder.encode(o.cfw, o.magic, CfwEncoder.LENS_BOTH, link.mtu(o.arm))
         } else {
-            Envelope.frame(o.stock!!(o.magic), o.sid, o.flag, nextSeq())
+            Envelope.frame(o.stock!!(o.magic), o.sid, o.flag, nextSeq(), stockWriteSize(o.arm))
         }
         if (o.tracked) inFlight += o
         try {

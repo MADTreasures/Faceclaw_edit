@@ -16,6 +16,11 @@ class FakeGlasses(
 ) : BleLink {
     override var listener: BleLink.Listener? = null
 
+    /** Bond state as the OS would report it (null = unknown). Auth succeeds only when not false. */
+    var bonded: Boolean? = null
+    /** When set, the fake "OS pairing dialog" is accepted at this time. */
+    var bondAcceptedAtMs: Long? = null
+
     /** What the phone has drawn into the screen buffer (4-bit levels, 640×480). */
     val screen = ByteArray(FrameEncoder.WIDTH * FrameEncoder.HEIGHT)
     /** What the lenses show after the last PRESENT. */
@@ -61,6 +66,12 @@ class FakeGlasses(
 
     override fun mtu(arm: Arm): Int = 512
 
+    override fun isBonded(arm: Arm): Boolean? {
+        val at = bondAcceptedAtMs
+        if (bonded == false && at != null && clock() >= at) bonded = true
+        return bonded
+    }
+
     override suspend fun write(arm: Arm, frames: List<ByteArray>) {
         check(arm in connected) { "$arm not connected" }
         for (f in frames) reassemblers.getValue(arm).push(f)
@@ -100,7 +111,11 @@ class FakeGlasses(
         val p = m.proto ?: return
         val magic = p.int(2) ?: 0
         when (m.sid) {
-            Sid.DEV_CONFIG -> if (p.int(1) == 4) notify(arm, Sid.DEV_CONFIG, 0, hexBytes("080410") + varint(magic) + hexBytes("1a00"))
+            Sid.DEV_CONFIG -> if (p.int(1) == 4) {
+                // Before encryption the glasses answer with a non-success result.
+                val ok = isBonded(arm) != false
+                notify(arm, Sid.DEV_CONFIG, 0, hexBytes("080410") + varint(magic) + if (ok) hexBytes("1a00") else hexBytes("1a020801"))
+            }
             Sid.DASHBOARD -> notify(arm, Sid.DASHBOARD, 0, hexBytes("080210") + varint(magic))
             Sid.SETTINGS -> {
                 p.bytes(101)?.let { c ->
