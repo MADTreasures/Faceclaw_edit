@@ -11,6 +11,7 @@ App-Code werden kann.
   "format": "faceclaw-edit/design@1",
   "id": "beispiel",
   "name": "Beispiel: Brillenmenü",
+  "notes": "Ziele und Features des ganzen Entwurfs",
   "displayArea": "full",
   "start": "s_start",
   "updatedAt": "2026-09-27T21:00:00.000Z",
@@ -20,6 +21,7 @@ App-Code werden kann.
 
 | Feld | Bedeutung |
 |---|---|
+| `notes` | Ziele und Feature-Wünsche für den ganzen Entwurf |
 | `displayArea` | `full` (640 × 480), `comfort` (600 × 400) oder `compact` (576 × 288) – entspricht `Prefs.DisplayArea` |
 | `start` | ID des Bildschirms, der zuerst erscheint |
 
@@ -30,6 +32,7 @@ App-Code werden kann.
 | `id`, `name` | `name` steht in der Statuszeile (wie `Screen.title`) |
 | `kind` | `menu` (Liste von Einträgen) oder `free` (frei platzierte Elemente) |
 | `statusBar` | Statuszeile oben (Uhrzeit, Titel, Akku); `false` = Vollbild (`Screen.fullscreen`) |
+| `runsOn` | Wunsch zur Umsetzung: `open` (Claude schlägt vor), `app` (Handy/Uhr zeichnet), `firmware` (läuft auf der Brille selbst) |
 | `notes` | Beschreibung, was der Bildschirm tun soll – der wichtigste Teil für die Umsetzung |
 | `tapTarget` | nur `free`: Bildschirm, den Tippen öffnet |
 | `items` | nur `menu`: Einträge (siehe unten) |

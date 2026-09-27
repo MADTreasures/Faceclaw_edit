@@ -14,6 +14,9 @@ Pure Kotlin. The user writes German; code, comments and commit messages are Engl
 - `FACECLAW_STOCK_IMAGE=/path/g2_2.3.0.24.bin ./gradlew :core:test` — also checks the firmware
   pipeline against Even's real stock image (download it yourself; never commit it).
 - `web/designer/build.sh` — regenerates `web/designer/index.html` from `designer.html`.
+- `python3 scripts/cfw_build.py [--stock FILE | --check IMAGE]` — builds/validates the custom firmware
+  image without flashing (stdlib only). `python3 scripts/make_handoff_zip.py` — builds the German
+  hand-off ZIP from `docs/uebergabe/` (knowledge, designer, analysis docs, reference code).
 
 ## Where things are
 
@@ -37,7 +40,8 @@ Pure Kotlin. The user writes German; code, comments and commit messages are Engl
   claude.ai artifact whose db holds the user's designs in the `designs` collection). Design JSON
   format and its mapping to `MenuItem`/draw calls: `docs/design-format.md`.
 - `docs/analysis/` detailed specs of the original protocols with source citations — read the
-  relevant one before touching protocol code.
+  relevant one before touching protocol code. `docs/uebergabe/` German hand-off docs for new chats
+  (how the custom firmware is built, flashing rules, designer workflow, prompt template).
 
 ## Rules
 

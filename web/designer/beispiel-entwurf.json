@@ -1,0 +1,323 @@
+{
+  "format": "faceclaw-edit/design@1",
+  "id": "beispiel",
+  "name": "Beispiel: Brillenmenü",
+  "notes": "Beispiel. Ziele und Feature-Wünsche für den ganzen Entwurf gehören hierher.",
+  "displayArea": "full",
+  "start": "s_start",
+  "screens": [
+    {
+      "id": "s_start",
+      "name": "Start",
+      "kind": "free",
+      "statusBar": true,
+      "runsOn": "open",
+      "tapTarget": "s_menu",
+      "notes": "Startbildschirm nach dem Aufwachen. Tippen öffnet das Menü.",
+      "items": [],
+      "elements": [
+        {
+          "id": "e_clock",
+          "type": "text",
+          "x": 24,
+          "y": 64,
+          "w": 592,
+          "text": "09:41",
+          "font": "display",
+          "level": 15,
+          "align": "center"
+        },
+        {
+          "id": "e_date",
+          "type": "text",
+          "x": 24,
+          "y": 214,
+          "w": 592,
+          "text": "Samstag, 27. September",
+          "font": "body",
+          "level": 9,
+          "align": "center"
+        },
+        {
+          "id": "e_card",
+          "type": "rect",
+          "x": 96,
+          "y": 300,
+          "w": 448,
+          "h": 76,
+          "radius": 14,
+          "fill": 2,
+          "stroke": null,
+          "strokeWidth": 2
+        },
+        {
+          "id": "e_bell",
+          "type": "icon",
+          "x": 120,
+          "y": 324,
+          "size": 28,
+          "name": "notifications",
+          "level": 13
+        },
+        {
+          "id": "e_count",
+          "type": "text",
+          "x": 164,
+          "y": 326,
+          "w": 360,
+          "text": "3 neue Nachrichten",
+          "font": "body",
+          "level": 13,
+          "align": "left"
+        },
+        {
+          "id": "e_hint",
+          "type": "text",
+          "x": 24,
+          "y": 420,
+          "w": 592,
+          "text": "Tippen öffnet das Menü",
+          "font": "caption",
+          "level": 6,
+          "align": "center"
+        }
+      ]
+    },
+    {
+      "id": "s_menu",
+      "name": "Menü",
+      "kind": "menu",
+      "statusBar": true,
+      "runsOn": "open",
+      "notes": "Hauptmenü mit allen Apps.",
+      "elements": [],
+      "items": [
+        {
+          "id": "i_notif",
+          "type": "link",
+          "label": "Benachrichtigungen",
+          "icon": "notifications",
+          "detail": "3",
+          "target": null,
+          "notes": "Liste der Handy-Benachrichtigungen"
+        },
+        {
+          "id": "i_music",
+          "type": "link",
+          "label": "Musik",
+          "icon": "music_note",
+          "detail": "Spielt",
+          "target": "s_music"
+        },
+        {
+          "id": "i_timer",
+          "type": "link",
+          "label": "Timer",
+          "icon": "timer",
+          "target": null,
+          "notes": "Timer und Stoppuhr"
+        },
+        {
+          "id": "i_weather",
+          "type": "link",
+          "label": "Wetter",
+          "icon": "wb_sunny",
+          "detail": "18°",
+          "target": null
+        },
+        {
+          "id": "i_sys",
+          "type": "header",
+          "label": "System"
+        },
+        {
+          "id": "i_settings",
+          "type": "link",
+          "label": "Einstellungen",
+          "icon": "settings",
+          "target": "s_settings"
+        },
+        {
+          "id": "i_off",
+          "type": "action",
+          "label": "Display aus",
+          "icon": "visibility_off",
+          "notes": "Schaltet das Display aus, bis zum nächsten Tippen."
+        }
+      ]
+    },
+    {
+      "id": "s_settings",
+      "name": "Einstellungen",
+      "kind": "menu",
+      "statusBar": true,
+      "runsOn": "open",
+      "notes": "",
+      "elements": [],
+      "items": [
+        {
+          "id": "i_bright",
+          "type": "choice",
+          "label": "Helligkeit",
+          "icon": "brightness_medium",
+          "options": [
+            "Auto",
+            "20 %",
+            "40 %",
+            "60 %",
+            "80 %",
+            "100 %"
+          ],
+          "selected": 0
+        },
+        {
+          "id": "i_dnd",
+          "type": "toggle",
+          "label": "Nicht stören",
+          "icon": "do_not_disturb_on",
+          "on": false
+        },
+        {
+          "id": "i_sounds",
+          "type": "toggle",
+          "label": "Töne",
+          "icon": "volume_up",
+          "on": true
+        },
+        {
+          "id": "i_timeout",
+          "type": "stepper",
+          "label": "Display aus nach",
+          "icon": "timer",
+          "min": 5,
+          "max": 120,
+          "step": 5,
+          "value": 20,
+          "unit": " s"
+        },
+        {
+          "id": "i_info",
+          "type": "header",
+          "label": "Info"
+        },
+        {
+          "id": "i_fw",
+          "type": "info",
+          "label": "Firmware",
+          "detail": "Faceclaw/34"
+        },
+        {
+          "id": "i_batt",
+          "type": "info",
+          "label": "Akku Brille",
+          "icon": "battery_full",
+          "detail": "80 %"
+        }
+      ]
+    },
+    {
+      "id": "s_music",
+      "name": "Musik",
+      "kind": "free",
+      "statusBar": true,
+      "runsOn": "open",
+      "tapTarget": null,
+      "notes": "Tippen: Pause/Weiter. Scrollen: Titel wechseln.",
+      "items": [],
+      "elements": [
+        {
+          "id": "e_label",
+          "type": "text",
+          "x": 72,
+          "y": 76,
+          "w": 496,
+          "text": "Jetzt läuft",
+          "font": "caption",
+          "level": 6,
+          "align": "left"
+        },
+        {
+          "id": "e_title",
+          "type": "text",
+          "x": 72,
+          "y": 104,
+          "w": 496,
+          "text": "Bohemian Rhapsody",
+          "font": "title",
+          "level": 15,
+          "align": "left"
+        },
+        {
+          "id": "e_artist",
+          "type": "text",
+          "x": 72,
+          "y": 148,
+          "w": 496,
+          "text": "Queen",
+          "font": "body",
+          "level": 9,
+          "align": "left"
+        },
+        {
+          "id": "e_progress",
+          "type": "progress",
+          "x": 72,
+          "y": 214,
+          "w": 496,
+          "h": 6,
+          "value": 0.38,
+          "level": 13
+        },
+        {
+          "id": "e_pos",
+          "type": "text",
+          "x": 72,
+          "y": 232,
+          "w": 120,
+          "text": "2:14",
+          "font": "caption",
+          "level": 6,
+          "align": "left"
+        },
+        {
+          "id": "e_len",
+          "type": "text",
+          "x": 448,
+          "y": 232,
+          "w": 120,
+          "text": "5:55",
+          "font": "caption",
+          "level": 6,
+          "align": "right"
+        },
+        {
+          "id": "e_prev",
+          "type": "icon",
+          "x": 200,
+          "y": 316,
+          "size": 48,
+          "name": "skip_previous",
+          "level": 9
+        },
+        {
+          "id": "e_pause",
+          "type": "icon",
+          "x": 288,
+          "y": 308,
+          "size": 64,
+          "name": "pause",
+          "level": 15
+        },
+        {
+          "id": "e_next",
+          "type": "icon",
+          "x": 392,
+          "y": 316,
+          "size": 48,
+          "name": "skip_next",
+          "level": 9
+        }
+      ]
+    }
+  ]
+}

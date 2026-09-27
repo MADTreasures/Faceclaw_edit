@@ -196,6 +196,10 @@ dialog::backdrop { background: rgba(8, 12, 9, .45); }
         <button class="btn" id="addFree" type="button"><span class="mi">dashboard</span>Freie Fläche</button>
       </div>
     </section>
+    <section class="panel">
+      <h2>Notizen zum Entwurf</h2>
+      <textarea id="designNotes" rows="4" aria-label="Notizen zum ganzen Entwurf" placeholder="Ziele und Features, z. B. „Menü ohne Handy direkt auf der Brille“, „Uhr als Fernbedienung“ …"></textarea>
+    </section>
     <section class="panel" id="handoff">
       <h2>An Claude übergeben</h2>
       <p class="small" id="handoffText" style="margin:0"></p>
@@ -367,6 +371,12 @@ const ITEM_TYPES = {
   header: { label: 'Überschrift', icon: 'title', hint: 'Nicht wählbar, gliedert die Liste.' },
   info: { label: 'Info', icon: 'info', hint: 'Nicht wählbare Zeile mit Wert rechts.' },
 };
+// Where a screen should be implemented; a hint for whoever turns the design into code.
+const RUNS_ON = {
+  open: 'Offen – Claude schlägt vor',
+  app: 'App (Handy/Uhr zeichnet, Brille zeigt an)',
+  firmware: 'Firmware (läuft auf der Brille selbst)',
+};
 const EL_TYPES = {
   text: { label: 'Text', icon: 'text_fields' },
   rect: { label: 'Rechteck', icon: 'crop_square' },
@@ -488,6 +498,7 @@ function normalize(d) {
     format: 'faceclaw-edit/design@1',
     id: typeof d.id === 'string' && /^[A-Za-z0-9_.~:@+-]{1,60}$/.test(d.id) ? d.id : uid('d_'),
     name: String(d.name || 'Entwurf').slice(0, 120),
+    notes: String(d.notes ?? ''),
     displayArea: AREAS[d.displayArea] ? d.displayArea : 'full',
     start: d.start,
     updatedAt: d.updatedAt,
@@ -496,6 +507,7 @@ function normalize(d) {
       name: String(s.name ?? 'Bildschirm').slice(0, 80),
       kind: s.kind === 'free' ? 'free' : 'menu',
       statusBar: s.statusBar !== false,
+      runsOn: RUNS_ON[s.runsOn] ? s.runsOn : 'open',
       notes: String(s.notes ?? ''),
       tapTarget: s.tapTarget ?? null,
       items: (Array.isArray(s.items) ? s.items : []).filter((i) => i && ITEM_TYPES[i.type]).map((i) => ({ ...i, id: i.id || uid('i_'), label: String(i.label ?? '') })),
@@ -1316,6 +1328,7 @@ function renderDesignSelect() {
   for (const d of designs) sel.append(h('option', { value: d.id, text: d.id === design.id ? design.name : d.name }));
   sel.value = design.id;
   $('designName').value = design.name;
+  $('designNotes').value = design.notes || '';
   renderHandoff();
 }
 
@@ -1334,6 +1347,11 @@ $('designSelect').addEventListener('change', async (e) => {
   setDesign(normalize(clone({ ...d, id })), false);
   localSet(LOCAL_LAST, id);
   renderDesignSelect();
+});
+
+$('designNotes').addEventListener('input', (e) => {
+  design.notes = e.target.value;
+  changed();
 });
 
 $('designName').addEventListener('input', (e) => {
@@ -1371,7 +1389,7 @@ function renderScreenList() {
 
 function addScreen(kind) {
   const s = {
-    id: uid('s_'), name: kind === 'menu' ? 'Neues Menü' : 'Neue Fläche', kind, statusBar: true, notes: '', tapTarget: null,
+    id: uid('s_'), name: kind === 'menu' ? 'Neues Menü' : 'Neue Fläche', kind, statusBar: true, runsOn: 'open', notes: '', tapTarget: null,
     items: kind === 'menu' ? [{ id: uid('i_'), type: 'action', label: 'Eintrag', icon: null }] : [],
     elements: kind === 'free' ? [{ id: uid('e_'), type: 'text', x: 24, y: 200, w: 592, text: 'Text', font: 'title', level: 15, align: 'center' }] : [],
   };
@@ -1457,6 +1475,7 @@ function renderInspector() {
   sp.append(h('h2', { text: s.kind === 'menu' ? 'Menü-Bildschirm' : 'Freie Fläche' }));
   sp.append(field('Name (steht in der Statuszeile)', textInput(s.name, (v) => { s.name = v.slice(0, 80); })));
   sp.append(h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: s.statusBar !== false, onchange: (e) => { s.statusBar = e.target.checked; changed(); } }), 'Statuszeile anzeigen (Uhrzeit, Titel, Akku)'));
+  sp.append(field('Umsetzung', selectInput(s.runsOn || 'open', Object.entries(RUNS_ON), (v) => { s.runsOn = v; })));
   if (s.kind === 'free') {
     sp.append(field('Tippen öffnet', selectInput(s.tapTarget || '', screenOptions(s.id), (v) => { s.tapTarget = v || null; })));
   }
