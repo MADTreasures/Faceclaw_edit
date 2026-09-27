@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
+import com.madtreasures.faceclaw.app.firmware.FirmwareController
 import com.madtreasures.faceclaw.app.platform.AndroidCalendar
 import com.madtreasures.faceclaw.app.platform.AndroidMedia
 import com.madtreasures.faceclaw.app.platform.AndroidNotificationSource
@@ -75,6 +76,7 @@ class AppGraph(val context: Context) {
     val calendar = AndroidCalendar(context, appScope)
     val weather = AndroidWeather(context, appScope)
     val connection = ConnectionManager(context, this)
+    val firmware by lazy { FirmwareController(this) }
 
     private val phoneBattery = MutableStateFlow<Pair<Int?, Boolean>>(null to false)
 

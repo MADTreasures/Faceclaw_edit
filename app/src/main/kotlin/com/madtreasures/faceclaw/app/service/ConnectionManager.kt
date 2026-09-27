@@ -35,6 +35,10 @@ class ConnectionManager(private val context: Context, private val graph: AppGrap
 
     val hasSession: Boolean get() = session != null
 
+    /** Set while a firmware update owns the glasses: no session may start. */
+    @Volatile var pausedForFirmware = false
+        private set
+
     val hasPairedGlasses: Boolean
         get() = graph.settings[Prefs.pairedLeft].isNotBlank() && graph.settings[Prefs.pairedRight].isNotBlank()
 
@@ -45,7 +49,7 @@ class ConnectionManager(private val context: Context, private val graph: AppGrap
 
     @Synchronized
     fun connect() {
-        if (session != null) return
+        if (session != null || pausedForFirmware) return
         val left = graph.settings[Prefs.pairedLeft]
         val right = graph.settings[Prefs.pairedRight]
         if (left.isBlank() || right.isBlank()) {
@@ -83,6 +87,22 @@ class ConnectionManager(private val context: Context, private val graph: AppGrap
             release()
             _status.value = SessionStatus(detail = "Disconnected")
         }
+    }
+
+    /** Ends the session (if any) and keeps it off until [resumeAfterFirmware]. */
+    suspend fun pauseForFirmware() {
+        pausedForFirmware = true
+        session?.let { s ->
+            s.stop()
+            release()
+        }
+        _status.value = SessionStatus(detail = "Firmware update in progress")
+    }
+
+    fun resumeAfterFirmware(reconnect: Boolean) {
+        pausedForFirmware = false
+        _status.value = SessionStatus(detail = "Not connected")
+        if (reconnect) connect()
     }
 
     @Synchronized

@@ -12,6 +12,7 @@ import android.bluetooth.BluetoothStatusCodes
 import android.content.Context
 import android.os.Build
 import android.util.Log
+import com.madtreasures.faceclaw.core.firmware.FirmwareLink
 import com.madtreasures.faceclaw.core.protocol.Arm
 import com.madtreasures.faceclaw.core.protocol.BleLink
 import com.madtreasures.faceclaw.core.protocol.G2Gatt
@@ -24,7 +25,7 @@ import java.io.IOException
 import java.util.UUID
 
 /**
- * [BleLink] over Android's BluetoothGatt for the two temples.
+ * [BleLink] and [FirmwareLink] over Android's BluetoothGatt for the two temples.
  *
  * Every GATT operation of both links is serialised by one lock (Android's stack handles one
  * outstanding operation well, and fragments of different messages must never interleave).
@@ -32,13 +33,15 @@ import java.util.UUID
  * controller's buffers never overflow.
  */
 @SuppressLint("MissingPermission")
-class AndroidBleLink(private val context: Context, private val addresses: Map<Arm, String>) : BleLink {
+class AndroidBleLink(private val context: Context, private val addresses: Map<Arm, String>) : BleLink, FirmwareLink {
     companion object {
         private const val TAG = "AndroidBleLink"
         private val RETRY_DELAYS_MS = longArrayOf(1, 1, 1, 2, 4, 8, 12, 20, 35, 100, 200)
         private val CONTROL_WRITE: UUID = UUID.fromString(G2Gatt.CONTROL_WRITE)
         private val CONTROL_NOTIFY: UUID = UUID.fromString(G2Gatt.CONTROL_NOTIFY)
         private val AUDIO_NOTIFY: UUID = UUID.fromString(G2Gatt.AUDIO_NOTIFY)
+        private val OTA_WRITE: UUID = UUID.fromString(G2Gatt.OTA_WRITE)
+        private val OTA_NOTIFY: UUID = UUID.fromString(G2Gatt.OTA_NOTIFY)
         private val CCCD: UUID = UUID.fromString(G2Gatt.CCCD)
     }
 
@@ -52,6 +55,7 @@ class AndroidBleLink(private val context: Context, private val addresses: Map<Ar
         @Volatile var connected = false
         @Volatile var mtu = 23
         var control: BluetoothGattCharacteristic? = null
+        var ota: BluetoothGattCharacteristic? = null
         val connectResult = CompletableDeferred<Boolean>()
         @Volatile var mtuDone: CompletableDeferred<Int>? = null
         @Volatile var servicesDone: CompletableDeferred<Boolean>? = null
@@ -108,7 +112,10 @@ class AndroidBleLink(private val context: Context, private val addresses: Map<Ar
         }
     }
 
-    override suspend fun connect(arm: Arm): Unit = lock.withLock {
+    override suspend fun connect(arm: Arm): Unit = connect(arm, ota = false)
+
+    /** Connects [arm]; with [ota] the update characteristics are required and subscribed as well. */
+    override suspend fun connect(arm: Arm, ota: Boolean): Unit = lock.withLock {
         val address = addresses[arm] ?: throw IOException("no address for $arm")
         val existing = arms[arm]
         val link = if (existing != null && existing.connected) existing else {
@@ -135,8 +142,13 @@ class AndroidBleLink(private val context: Context, private val addresses: Map<Ar
         if (withTimeoutOrNull(8000) { services.await() } != true) throw IOException("$arm: service discovery failed")
         link.control = findCharacteristic(g, CONTROL_WRITE) ?: throw IOException("$arm: control characteristic missing")
         enableNotifications(link, CONTROL_NOTIFY, required = true)
-        enableNotifications(link, AUDIO_NOTIFY, required = false)
-        Log.i(TAG, "$arm connected, mtu ${link.mtu}")
+        if (ota) {
+            link.ota = findCharacteristic(g, OTA_WRITE) ?: throw IOException("$arm: update characteristic missing")
+            enableNotifications(link, OTA_NOTIFY, required = true)
+        } else {
+            enableNotifications(link, AUDIO_NOTIFY, required = false)
+        }
+        Log.i(TAG, "$arm connected, mtu ${link.mtu}${if (ota) ", update channel" else ""}")
         Unit
     }
 
@@ -167,9 +179,16 @@ class AndroidBleLink(private val context: Context, private val addresses: Map<Ar
 
     override fun mtu(arm: Arm): Int = arms[arm]?.mtu ?: 23
 
-    override suspend fun write(arm: Arm, frames: List<ByteArray>): Unit = lock.withLock {
+    override suspend fun write(arm: Arm, frames: List<ByteArray>): Unit = write(arm, G2Gatt.CONTROL_WRITE, frames)
+
+    /** Writes [frames] back to back; no other write can come in between. */
+    override suspend fun write(arm: Arm, characteristic: String, frames: List<ByteArray>): Unit = lock.withLock {
         val link = arms[arm]?.takeIf { it.connected } ?: throw IOException("$arm not connected")
-        val ch = link.control ?: throw IOException("$arm has no control characteristic")
+        val ch = when (characteristic) {
+            G2Gatt.CONTROL_WRITE -> link.control ?: throw IOException("$arm has no control characteristic")
+            G2Gatt.OTA_WRITE -> link.ota ?: throw IOException("$arm has no update characteristic")
+            else -> throw IOException("unknown characteristic $characteristic")
+        }
         for (f in frames) writeOne(link, ch, f)
     }
 
@@ -199,13 +218,22 @@ class AndroidBleLink(private val context: Context, private val addresses: Map<Ar
     }
 
     override suspend fun disconnect(): Unit = lock.withLock {
-        for (l in arms.values) {
-            l.connected = false
-            l.gatt?.let { runCatching { it.disconnect(); it.close() } }
-            l.gatt = null
-        }
+        for (l in arms.values) close(l)
         arms.clear()
     }
+
+    override suspend fun disconnect(arm: Arm): Unit = lock.withLock {
+        arms.remove(arm)?.let { close(it) }
+        Unit
+    }
+
+    private fun close(l: ArmLink) {
+        l.connected = false
+        l.gatt?.let { runCatching { it.disconnect(); it.close() } }
+        l.gatt = null
+    }
+
+    override fun isConnected(arm: Arm): Boolean = arms[arm]?.connected == true
 
     override fun isBonded(arm: Arm): Boolean? {
         val address = addresses[arm] ?: return null

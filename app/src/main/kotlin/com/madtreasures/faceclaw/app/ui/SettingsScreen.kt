@@ -49,7 +49,7 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(graph: AppGraph, onBack: () -> Unit, onOpenPairing: () -> Unit) {
+fun SettingsScreen(graph: AppGraph, onBack: () -> Unit, onOpenPairing: () -> Unit, onOpenFirmware: () -> Unit) {
     val s = graph.settings
     Scaffold(
         topBar = {
@@ -76,6 +76,7 @@ fun SettingsScreen(graph: AppGraph, onBack: () -> Unit, onOpenPairing: () -> Uni
                     }) { Text("Forget") }
                 }
                 SwitchRow("Connect automatically", s, Prefs.autoConnect)
+                TextButton(onClick = onOpenFirmware) { Text("Glasses firmware…") }
             }
             Section("Display") {
                 SliderRow("Brightness", s, Prefs.brightness, 0..100, 10, "%")

@@ -62,6 +62,11 @@
             android:foregroundServiceType="connectedDevice" />
 
         <service
+            android:name=".firmware.FirmwareService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+
+        <service
             android:name=".platform.NotificationListener"
             android:exported="false"
             android:label="@string/app_name"

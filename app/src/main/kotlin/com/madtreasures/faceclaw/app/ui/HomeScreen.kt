@@ -54,6 +54,7 @@ fun HomeScreen(
     resumeTick: Int,
     onOpenPairing: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenFirmware: () -> Unit,
     onRequestPermissions: (List<String>) -> Unit,
 ) {
     val status by graph.connection.status.collectAsStateWithLifecycle()
@@ -79,7 +80,7 @@ fun HomeScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            ConnectionCard(graph, status.phase, status.detail, status.battery, status.firmware?.extension, onOpenPairing)
+            ConnectionCard(graph, status.phase, status.detail, status.battery, status.firmware?.extension, onOpenPairing, onOpenFirmware)
             GlassesPreview(frame, displayOn, send, Modifier.fillMaxWidth())
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 FilledTonalButton(onClick = { send(Gesture.ScrollUp) }) { Icon(Icons.Default.KeyboardArrowUp, "Previous") }
@@ -108,7 +109,15 @@ fun HomeScreen(
 }
 
 @Composable
-private fun ConnectionCard(graph: AppGraph, phase: SessionPhase, detail: String, battery: Int?, cfw: String?, onOpenPairing: () -> Unit) {
+private fun ConnectionCard(
+    graph: AppGraph,
+    phase: SessionPhase,
+    detail: String,
+    battery: Int?,
+    cfw: String?,
+    onOpenPairing: () -> Unit,
+    onOpenFirmware: () -> Unit,
+) {
     val paired = graph.connection.hasPairedGlasses
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
         Column(Modifier.padding(16.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -129,7 +138,7 @@ private fun ConnectionCard(graph: AppGraph, phase: SessionPhase, detail: String,
             if (info.isNotEmpty()) Text(info, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (phase == SessionPhase.IncompatibleFirmware) {
                 Text(
-                    "These glasses need the Faceclaw custom firmware (revision 34 or newer). Install it with the original Faceclaw app or g2flash — see the README.",
+                    "These glasses need the Faceclaw custom firmware (revision 34 or newer). You can install it from the firmware page.",
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
@@ -137,6 +146,11 @@ private fun ConnectionCard(graph: AppGraph, phase: SessionPhase, detail: String,
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 when {
                     !paired -> Button(onClick = onOpenPairing) { Text("Pair glasses") }
+                    graph.connection.pausedForFirmware -> Button(onClick = onOpenFirmware) { Text("Firmware update…") }
+                    phase == SessionPhase.IncompatibleFirmware -> {
+                        Button(onClick = onOpenFirmware) { Text("Install firmware…") }
+                        TextButton(onClick = { graph.connection.connect() }) { Text("Retry") }
+                    }
                     graph.connection.hasSession -> OutlinedButton(onClick = { graph.connection.disconnect() }) { Text("Disconnect") }
                     else -> {
                         Button(onClick = { graph.connection.connect() }) { Text("Connect") }

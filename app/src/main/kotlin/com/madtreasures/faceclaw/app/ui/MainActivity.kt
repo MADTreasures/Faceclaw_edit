@@ -18,7 +18,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.madtreasures.faceclaw.app.FaceclawApp
 import com.madtreasures.faceclaw.core.platform.Prefs
 
-enum class Page { Home, Pairing, Settings }
+enum class Page { Home, Pairing, Settings, Firmware }
 
 class MainActivity : ComponentActivity() {
     /** Bumped on resume so permission state is re-read after visiting system settings. */
@@ -45,6 +45,7 @@ class MainActivity : ComponentActivity() {
                         resumeTick = resumeTick,
                         onOpenPairing = { page = Page.Pairing },
                         onOpenSettings = { page = Page.Settings },
+                        onOpenFirmware = { page = Page.Firmware },
                         onRequestPermissions = { permissionLauncher.launch(it.toTypedArray()) },
                     )
                     Page.Pairing -> PairingScreen(
@@ -53,7 +54,13 @@ class MainActivity : ComponentActivity() {
                         onRequestPermissions = { permissionLauncher.launch(it.toTypedArray()) },
                         onPaired = { page = Page.Home },
                     )
-                    Page.Settings -> SettingsScreen(graph = graph, onBack = { page = Page.Home }, onOpenPairing = { page = Page.Pairing })
+                    Page.Settings -> SettingsScreen(
+                        graph = graph,
+                        onBack = { page = Page.Home },
+                        onOpenPairing = { page = Page.Pairing },
+                        onOpenFirmware = { page = Page.Firmware },
+                    )
+                    Page.Firmware -> FirmwareScreen(graph = graph, onBack = { page = Page.Home })
                 }
             }
         }

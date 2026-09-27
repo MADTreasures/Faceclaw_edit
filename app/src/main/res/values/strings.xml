@@ -3,4 +3,6 @@
     <string name="app_name">Faceclaw Edit</string>
     <string name="channel_connection">Glasses connection</string>
     <string name="channel_connection_description">Keeps the glasses connected while the phone is locked.</string>
+    <string name="channel_firmware">Firmware update</string>
+    <string name="channel_firmware_description">Progress of a firmware update on the glasses.</string>
 </resources>
