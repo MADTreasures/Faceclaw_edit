@@ -1294,6 +1294,35 @@ Verify **all** of the following before the first OTA write (BEGIN):
     captured byte format.
 14. Whether the MD5-in-URL claim holds (it would allow an additional integrity check).
 
+### 13.0 Answered while implementing the installer (2026-09-27)
+
+Checked by parsing the real stock image with this repository's own validator
+(`core/.../firmware/EvenOtaImage.kt`, `RealImageTest`):
+
+* **#14 MD5 naming:** confirmed — the CDN file name `1dbdf37b03a1169c384945e94d671371` is the MD5
+  of the 2.3.0.24 image.
+* **#2 component names** (2.3.0.24, TOC order = flash order):
+
+  | # | name | payload bytes | 4 KB blocks |
+  |---|---|---|---|
+  | 0 | `firmware/codec.bin` | 326,092 | 80 |
+  | 1 | `firmware/ble_em9305.bin` | 211,948 | 52 |
+  | 2 | `firmware/touch.bin` | 34,720 | 9 |
+  | 3 | `firmware/box.bin` | 55,784 | 14 |
+  | 4 | `ota/s200_bootloader.bin` | 149,755 | 37 |
+  | 5 | `ota/s200_firmware_ota.bin` (main app; CFW: 3,828,448 B, 935 blocks) | 3,758,720 | 918 |
+
+  The OTA path also rewrites the **bootloader** (component 4) — one more reason the per-component
+  END CRC check and the phone-side validation matter. Component 0 is the "80-block codec component"
+  g2flash mentions.
+* The stock image satisfies the stricter checks this spec recommends: TOC `size == ps + 128` for
+  every component and a correct main-app preamble CRC-32. Applying the bundled patch set with the
+  Kotlin implementation reproduces the pinned CFW SHA-256 `7d8764f8…0ee7` bit for bit.
+* **Recovery choice (#4 still open):** after a doubtful link (ack timeout, write failure, drop) the
+  installer reconnects, re-authenticates, sends a fresh BEGIN and then flashes the lens again **from
+  component 0** — exactly the sequence of a normal flash — instead of g2flash's "failed component
+  only", because nothing documents that components verified before a new BEGIN survive it.
+
 ### 13.1 Disagreements between sources (summary)
 
 | Topic | Disagreement | Where resolved in this spec |

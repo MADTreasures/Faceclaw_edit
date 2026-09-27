@@ -1,8 +1,8 @@
 # Roadmap und Vergleich mit dem Original
 
-Stand 0.1. „Original“ = Funktionen von Faceclaw laut dessen README bzw. Analyse.
+Stand 0.2. „Original“ = Funktionen von Faceclaw laut dessen README bzw. Analyse.
 
-| Bereich | Original | Faceclaw Edit 0.1 | Nächste Schritte |
+| Bereich | Original | Faceclaw Edit 0.2 | Nächste Schritte |
 |---|---|---|---|
 | Verbindung, Pairing, Reconnect | ✅ | ✅ (ungetestet auf Hardware) | Hardware-Test, Feinabstimmung der Timeouts |
 | Vollbild 640×480 über Custom-Firmware | ✅ | ✅ Diff-Frames mit RLE + Deflate | Display-Listen für Animationen ohne BLE-Last, Textur-Cache |
@@ -23,14 +23,17 @@ Stand 0.1. „Original“ = Funktionen von Faceclaw laut dessen README bzw. Anal
 | EvenHub-Apps | ✅ (Emulation) | ❌ | – |
 | Wear-OS-Uhr als Fernbedienung | ✅ | ❌ | – |
 | Spiele, Rechner, Dateien | ✅ | ❌ | – |
-| Firmware installieren/deinstallieren | ✅ | ❌ bewusst noch nicht | erst mit Hardware-Tests; Analyse und Sicherheits-Checkliste liegen in `docs/analysis/06-firmware.md` |
+| Firmware installieren/deinstallieren | ✅ | ✅ Custom 34 und Original 2.3.0.24, Testlauf, Prüfung nach dem Neustart (ungetestet auf Hardware) | erster Lauf auf Hardware mit Protokoll; danach eigene Firmware-Erweiterungen |
+| Menü-/Bildschirm-Designer im Browser | – | ✅ neu | Entwürfe als App-Bildschirme umsetzen, später automatisch |
 | Handy-Vorschau als Touchpad (auch ohne Brille) | ✅ | ✅ | – |
 | Desktop-Simulator | – | ✅ neu | – |
 | iOS | Beta | ❌ | Kern ist plattformneutral, eine iOS-Hülle wäre möglich |
 
-## Bekannte Grenzen von 0.1
+## Bekannte Grenzen von 0.2
 
 - Nicht auf echter Hardware getestet. Das Protokoll ist gegen dokumentierte Byte-Vektoren und eine
   simulierte Brille getestet, reale Zeitverhalten (BLE-Durchsatz, Kopplung) können abweichen.
 - Solange das Display „aus“ ist, bleibt die Verbindung aktiv (Heartbeats), das kostet Akku auf der Brille.
 - Akkuanzeige der Brille zeigt den Wert des rechten Bügels.
+- Der Firmware-Installer folgt exakt den erprobten Abläufen von Faceclaw und g2flash, wurde aber mit
+  dieser App noch auf keiner echten Brille ausgeführt. Zuerst den Testlauf verwenden.

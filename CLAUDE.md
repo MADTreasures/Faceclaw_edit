@@ -11,6 +11,9 @@ Pure Kotlin. The user writes German; code, comments and commit messages are Engl
   look at the PNGs after UI changes. `./gradlew :simulator:run` opens the desktop simulator.
 - `./gradlew :tools:bakeFonts` — re-bakes `core/src/main/resources/fonts/*.fcf` and regenerates
   `gfx/Icons.kt` from `tools/fonts/` (edit the spec list in `tools/.../FontBaker.kt`).
+- `FACECLAW_STOCK_IMAGE=/path/g2_2.3.0.24.bin ./gradlew :core:test` — also checks the firmware
+  pipeline against Even's real stock image (download it yourself; never commit it).
+- `web/designer/build.sh` — regenerates `web/designer/index.html` from `designer.html`.
 
 ## Where things are
 
@@ -22,8 +25,17 @@ Pure Kotlin. The user writes German; code, comments and commit messages are Engl
 - `core/.../protocol` G2 protocol: `Envelope` (aa21 framing, CRC16), `CfwTransport`/`CfwDraw`
   (sid 0xF0 custom-firmware transport, draw calls), `G2Events`, `GlassesSession` (connection state
   machine), `FakeGlasses` (firmware model used by tests).
-- `app/` Android: `ble/AndroidBleLink` (GATT), `service/` (foreground service, connection manager),
-  `platform/` (notifications, media, calendar, weather), `ui/` (Compose).
+- `core/.../firmware` firmware install: `EvenOtaImage` (container validation and brick guards),
+  `PatchSet` + `FirmwareCatalog` (pinned SHA-256 allow-list, bundled g2flash patch set in
+  `resources/firmware/`), `OtaProtocol`/`OtaFlasher` (stock OTA flash), `FirmwarePreflight`
+  (versions, batteries, on-lens confirmation), `FirmwareInstaller` (whole flow), `FirmwareLink` port.
+  Tests use `FakeOtaGlasses` (test sources) with fault injection.
+- `app/` Android: `ble/AndroidBleLink` (GATT, implements `BleLink` and `FirmwareLink`), `service/`
+  (foreground service, connection manager), `firmware/` (stock image cache, controller, service),
+  `platform/` (notifications, media, calendar, weather), `ui/` (Compose, incl. `FirmwareScreen`).
+- `web/designer/` browser designer for menus and screens (single HTML file; also published as a
+  claude.ai artifact whose db holds the user's designs in the `designs` collection). Design JSON
+  format and its mapping to `MenuItem`/draw calls: `docs/design-format.md`.
 - `docs/analysis/` detailed specs of the original protocols with source citations — read the
   relevant one before touching protocol code.
 
@@ -36,5 +48,10 @@ Pure Kotlin. The user writes German; code, comments and commit messages are Engl
 - Protocol changes need byte-level tests against documented vectors and, where possible, an
   end-to-end test with `FakeGlasses`.
 - Never send custom-firmware traffic to glasses that did not report `Faceclaw/<n>` with n ≥ 34.
-- Firmware flashing is intentionally not implemented; it needs hardware validation first
-  (see `docs/analysis/06-firmware.md` §11).
+- Firmware: only images on the `FirmwareCatalog` allow-list are ever flashed; keep every check of
+  `docs/analysis/06-firmware.md` §11 (image validation, SHA-256 before flashing, batteries, on-lens
+  confirmation, no other traffic during OTA, in-place resend only after an explicit NAK). Changes to
+  the OTA flow need `FakeOtaGlasses` tests. Never commit or redistribute Even's firmware.
+- Firmware mods are much riskier than app changes: prefer phone-side features. A new patch set comes
+  from g2flash's toolchain, gets its own pinned hashes and revision string, and needs hardware
+  validation before anyone installs it.

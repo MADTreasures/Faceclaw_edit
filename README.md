@@ -7,9 +7,10 @@ und ein Desktop-Simulator, mit dem sich die Brillen-Oberfläche ohne Hardware en
 
 ![Startbildschirm](docs/screenshots/01-home.png)
 
-> **Status: 0.1 (Vorabversion).** Grafik-Engine, UI-Baukasten, Shell, zehn Apps, das komplette
-> Bluetooth-Protokoll inkl. Custom-Firmware-Transport und die Android-App sind umgesetzt und mit
-> Tests gegen die dokumentierten Protokoll-Vektoren und eine simulierte Brille abgesichert.
+> **Status: 0.2 (Vorabversion).** Grafik-Engine, UI-Baukasten, Shell, zehn Apps, das komplette
+> Bluetooth-Protokoll inkl. Custom-Firmware-Transport, die Android-App, ein Firmware-Installer und ein
+> Designer für den Browser sind umgesetzt und mit Tests gegen die dokumentierten Protokoll-Vektoren
+> und eine simulierte Brille abgesichert.
 > **Auf echter Hardware ist diese Version noch nicht getestet.** Siehe [Roadmap](docs/roadmap.md).
 
 ## Was kann die App?
@@ -34,12 +35,10 @@ auch ganz ohne Brille), Kopplung, Einstellungen, Teleprompter-Editor (Text aus j
 ## Voraussetzungen
 
 - Android 10 oder neuer.
-- G2-Brille mit der **Faceclaw-Custom-Firmware, Revision 34 oder neuer** (`Faceclaw/34`). Sie wird
-  mit der Original-App [Faceclaw](https://github.com/jimrandomh/faceclaw) (Onboarding) oder mit
-  [g2flash](https://github.com/jimrandomh/g2flash) installiert. Diese App erkennt die Firmware und
-  verbindet sich nicht mit Stock- oder zu alter Firmware (sie sendet dann auch keine
-  Custom-Befehle). Ein eigener Installer ist bewusst noch nicht enthalten: ein ungetesteter
-  Flasher kann die Brille unbrauchbar machen.
+- G2-Brille mit der **Faceclaw-Custom-Firmware, Revision 34 oder neuer** (`Faceclaw/34`). Die App
+  kann sie selbst installieren (und Evens Original-Firmware wieder aufspielen): **Settings → Glasses
+  firmware…** – bitte vorher [docs/firmware.md](docs/firmware.md) lesen (Garantie, Risiken, Testlauf).
+  Ohne passende Firmware verbindet sich die App nicht und sendet auch keine Custom-Befehle.
 - Die offizielle Even-App darf nicht gleichzeitig mit der Brille verbunden sein.
 
 ## Bauen und starten
@@ -61,6 +60,15 @@ Q tippen-und-halten · N neue Benachrichtigung · D Display an/aus · W Brille a
 **Erste Schritte mit Brille:** App öffnen → Einrichtung (Bluetooth, Benachrichtigungszugriff,
 Hintergrundbetrieb) erlauben → „Pair glasses“ → Brille aus dem Etui nehmen, beide Bügel erscheinen als
 ein Paar → antippen → die beiden Android-Kopplungsanfragen bestätigen.
+
+## Menüs im Browser entwerfen
+
+Mit dem [Faceclaw Designer](web/designer/README.md) gestaltest du am PC Menüs und freie Bildschirme in
+einer pixelgenauen Vorschau der Brille (640 × 480, 16 Stufen, grün), bedienst sie wie mit dem Ring und
+beschreibst in Notizen, was passieren soll. Die Entwürfe übergibst du an Claude, der daraus App-Code
+macht – Format: [docs/design-format.md](docs/design-format.md).
+
+![Designer](docs/screenshots/designer.png)
 
 ## Eigene Apps und eigenes Design
 
@@ -90,10 +98,11 @@ Details: [docs/architektur.md](docs/architektur.md).
 
 | Modul | Inhalt |
 |---|---|
-| `core/` | reines Kotlin ohne Android: Grafik-Engine, Schriften, UI-Baukasten, Shell, Apps, G2-Protokoll, simulierte Brille |
+| `core/` | reines Kotlin ohne Android: Grafik-Engine, Schriften, UI-Baukasten, Shell, Apps, G2-Protokoll, Firmware-Installer, simulierte Brille |
 | `app/` | Android-App: Bluetooth (GATT), Vordergrunddienst, Benachrichtigungen, Medien, Kalender, Wetter, Compose-UI |
 | `simulator/` | Desktop-Simulator und Screenshot-Werkzeug |
 | `tools/` | Font-Baker (TTF → Bitmap-Schrift, Icon-Katalog) |
+| `web/designer/` | Designer für Menüs und Bildschirme (Browser) |
 | `docs/analysis/` | technische Analyse der Originale (Protokolle, Formate, Abläufe) |
 
 ## Lizenz und Dank
